@@ -1,0 +1,76 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L MCU_Microchip_ATtiny:ATtiny85V-10PU U?
+U 1 1 5FDE0C7F
+P 1900 1700
+F 0 "U?" H 1370 1746 50  0000 R CNN
+F 1 "ATtiny85V-10PU" H 1370 1655 50  0000 R CNN
+F 2 "Package_DIP:DIP-8_W7.62mm" H 1900 1700 50  0001 C CIN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/atmel-2586-avr-8-bit-microcontroller-attiny25-attiny45-attiny85_datasheet.pdf" H 1900 1700 50  0001 C CNN
+	1    1900 1700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5FDE2B5F
+P 1900 2400
+F 0 "#PWR?" H 1900 2150 50  0001 C CNN
+F 1 "GND" H 1905 2227 50  0000 C CNN
+F 2 "" H 1900 2400 50  0001 C CNN
+F 3 "" H 1900 2400 50  0001 C CNN
+	1    1900 2400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1900 2300 1900 2400
+$Comp
+L power:VCC #PWR?
+U 1 1 5FDE309C
+P 1900 1000
+F 0 "#PWR?" H 1900 850 50  0001 C CNN
+F 1 "VCC" H 1915 1173 50  0000 C CNN
+F 2 "" H 1900 1000 50  0001 C CNN
+F 3 "" H 1900 1000 50  0001 C CNN
+	1    1900 1000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1900 1000 1900 1100
+Text GLabel 2500 1900 2    50   Input ~ 0
+Reset
+Text GLabel 2500 1700 2    50   Input ~ 0
+Vibrate_switch
+Text GLabel 2500 1800 2    50   Input ~ 0
+RGB_switch
+Text GLabel 2500 1500 2    50   Output ~ 0
+LED_cutoff
+Text GLabel 2500 1600 2    50   Output ~ 0
+Vibrate_driver
+Text GLabel 2500 1400 2    50   Output ~ 0
+RGB_data
+$Comp
+L Switch:SW_Push SW?
+U 1 1 5FDE4277
+P 4650 1300
+F 0 "SW?" H 4650 1585 50  0000 C CNN
+F 1 "SW_Push" H 4650 1494 50  0000 C CNN
+F 2 "" H 4650 1500 50  0001 C CNN
+F 3 "~" H 4650 1500 50  0001 C CNN
+	1    4650 1300
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
