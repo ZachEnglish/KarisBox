@@ -1,4 +1,5 @@
 EESchema Schematic File Version 4
+LIBS:KarisGift-cache
 EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
@@ -14,7 +15,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L MCU_Microchip_ATtiny:ATtiny85V-10PU U?
+L KarisGift-rescue:ATtiny85V-10PU-MCU_Microchip_ATtiny U?
 U 1 1 5FDE0C7F
 P 1900 1700
 F 0 "U?" H 1370 1746 50  0000 R CNN

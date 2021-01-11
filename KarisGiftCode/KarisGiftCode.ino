@@ -35,6 +35,9 @@ unsigned long time_of_vibration_start = 0;
 bool last_rgb_button = false;
 bool last_vibrate_button = false;
 
+int rgb_state = 0;
+int rgb_last_processed_state = -1;
+
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -94,7 +97,7 @@ void loop() {
 
 
 void turn_off_outputs(){
-  pinMode(PIN_RGB, INPUT); //If this is not done the RGB LEDs ground through this data pin and still light up/draw power.
+  //pinMode(PIN_RGB, INPUT); //If this is not done the RGB LEDs ground through this data pin and still light up/draw power.
   pinMode(PIN_LED_CUTOFF, INPUT); //this just saves power for some reason. Effectively stops driving the transistors high.
   pinMode(PIN_VIBRATE_DRIVE, INPUT); //this just saves power for some reason
 }
@@ -118,11 +121,24 @@ bool ready_to_sleep(unsigned long current){
 
 
 void change_rgb_mode(){
-  
+  rgb_state++;
 }
 
 void do_rgb(){
-  
+  if(rgb_state != rgb_last_processed_state){
+    switch(rgb_state){
+      case 0:
+        colorWipe(rgbStrip.Color(255,   0,   0), 50); // Red
+        break;
+      case 1:
+        colorWipe(rgbStrip.Color(  0, 255,   0), 50); // Green
+        break;
+      case 2:
+        colorWipe(rgbStrip.Color(  0,   0, 255), 50); // Blue
+        break;
+    }
+    rgb_last_processed_state = rgb_state;
+  }
 }
 
 
@@ -172,6 +188,19 @@ void reset_timer(unsigned long current){
   time_of_last_action = current;
 }
 
+
+// Fill strip pixels one after another with a color. Strip is NOT cleared
+// first; anything there will be covered pixel by pixel. Pass in color
+// (as a single 'packed' 32-bit value, which you can get by calling
+// strip.Color(red, green, blue) as shown in the loop() function above),
+// and a delay time (in milliseconds) between pixels.
+void colorWipe(uint32_t color, int wait) {
+  for(int i=0; i<rgbStrip.numPixels(); i++) { // For each pixel in strip...
+    rgbStrip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
+    rgbStrip.show();                          //  Update strip to match
+    delay(wait);                           //  Pause for a moment
+  }
+}
 
 // Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
 void rainbow(int wait) {
