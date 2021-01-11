@@ -31,7 +31,7 @@ Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 unsigned long time_of_last_action = 0;
 unsigned long time_of_next_button_check = 0;
-unsigned long time_of_vibration_start = 0;
+unsigned long time_of_vibration_start = INACTIVE_TIME * 2;
 bool last_rgb_button = false;
 bool last_vibrate_button = false;
 
@@ -122,6 +122,10 @@ bool ready_to_sleep(unsigned long current){
 
 void change_rgb_mode(){
   rgb_state++;
+
+  if(rgb_state > 2){
+    rgb_state = 0;
+  }
 }
 
 void do_rgb(){
