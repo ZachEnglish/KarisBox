@@ -190,15 +190,12 @@ void turn_off_vibrate_motor() {
 }
 
 
-
-
-
-
-
-void turn_off_outputs() {
-  //pinMode(PIN_RGB, INPUT); //If this is not done the RGB LEDs ground through this data pin and still light up/draw power.
-  pinMode(PIN_LED_CUTOFF, INPUT); //this just saves power for some reason. Effectively stops driving the transistors high.
-  pinMode(PIN_VIBRATE_DRIVE, INPUT); //this just saves power for some reason
+//has it been sitting long enough to turn off?
+bool ready_to_sleep(unsigned long current) {
+  if ( (current - g_time_of_last_action) > INACTIVE_TIME ) {
+    return true;
+  }
+  return false;
 }
 
 
@@ -211,12 +208,14 @@ void go_to_sleep() {
 }
 
 
-bool ready_to_sleep(unsigned long current) {
-  if ( (current - g_time_of_last_action) > INACTIVE_TIME ) {
-    return true;
-  }
-  return false;
+//power is saved on the ATtiny85 by setting outputs to inputs before sleeping
+void turn_off_outputs() {
+  pinMode(PIN_RGB, INPUT);
+  pinMode(PIN_LED_CUTOFF, INPUT);
+  pinMode(PIN_VIBRATE_DRIVE, INPUT);
 }
+
+
 
 
 
