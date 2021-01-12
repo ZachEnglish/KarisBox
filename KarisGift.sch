@@ -776,58 +776,6 @@ Wire Wire Line
 	4300 4550 4300 4750
 Connection ~ 3550 4550
 $Comp
-L power:VCC #PWR?
-U 1 1 5FFC19B6
-P 5650 3700
-F 0 "#PWR?" H 5650 3550 50  0001 C CNN
-F 1 "VCC" H 5665 3873 50  0000 C CNN
-F 2 "" H 5650 3700 50  0001 C CNN
-F 3 "" H 5650 3700 50  0001 C CNN
-	1    5650 3700
-	1    0    0    -1  
-$EndComp
-$Comp
-L Transistor_BJT:2N3906 Q?
-U 1 1 5FFC19BC
-P 5550 4000
-F 0 "Q?" H 5740 4046 50  0000 L CNN
-F 1 "2N3906" H 5740 3955 50  0000 L CNN
-F 2 "Package_TO_SOT_THT:TO-92_Inline" H 5750 3925 50  0001 L CIN
-F 3 "https://www.fairchildsemi.com/datasheets/2N/2N3906.pdf" H 5550 4000 50  0001 L CNN
-	1    5550 4000
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:R R?
-U 1 1 5FFC19C2
-P 5350 3850
-F 0 "R?" H 5250 4000 50  0000 C CNN
-F 1 "10k" V 5350 3850 50  0000 C CNN
-F 2 "" V 5280 3850 50  0001 C CNN
-F 3 "~" H 5350 3850 50  0001 C CNN
-	1    5350 3850
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	5350 3700 5650 3700
-Wire Wire Line
-	5650 3700 5650 3800
-Connection ~ 5650 3700
-$Comp
-L Device:R R?
-U 1 1 5FFC19CB
-P 5100 4000
-F 0 "R?" V 5000 3950 50  0000 C CNN
-F 1 "500" V 5100 4000 50  0000 C CNN
-F 2 "" V 5030 4000 50  0001 C CNN
-F 3 "~" H 5100 4000 50  0001 C CNN
-	1    5100 4000
-	0    1    1    0   
-$EndComp
-Wire Wire Line
-	5350 4000 5250 4000
-Connection ~ 5350 4000
-$Comp
 L power:GND #PWR?
 U 1 1 5FFC7D1B
 P 5050 5350
@@ -885,18 +833,6 @@ Wire Wire Line
 Wire Wire Line
 	7300 4550 7300 4750
 Connection ~ 6550 4550
-Wire Wire Line
-	5050 4550 5650 4550
-Wire Wire Line
-	1800 3800 1800 4000
-Connection ~ 1800 4000
-Wire Wire Line
-	1800 4000 1800 4100
-Wire Wire Line
-	5650 4200 5650 4550
-Connection ~ 5650 4550
-Wire Wire Line
-	5650 4550 5800 4550
 $Comp
 L Device:R R?
 U 1 1 5FFDCB12
@@ -944,5 +880,11 @@ Wire Notes Line
 Wire Notes Line
 	4900 650  4900 3100
 Wire Wire Line
-	1800 4000 4950 4000
+	5050 4550 5800 4550
+Wire Wire Line
+	1800 3800 1800 4100
+Wire Wire Line
+	5050 4550 4300 4550
+Connection ~ 5050 4550
+Connection ~ 4300 4550
 $EndSCHEMATC
