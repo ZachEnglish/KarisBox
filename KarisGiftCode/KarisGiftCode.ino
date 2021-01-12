@@ -13,7 +13,7 @@
 #include <Adafruit_NeoPixel.h> //for talking to the RGB LEDs
 
 
-//Stolen from the intertubes. tells the ATtiny85 to disable the analog to digital converter to save power.
+//Stolen from the intertubes. Macro that tells the ATtiny85 to disable the analog to digital converter to save power.
 #define adc_disable() (ADCSRA &= ~(1<<ADEN)) // disable ADC (before power-off)
 
 
@@ -38,13 +38,14 @@ Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 unsigned long g_time_of_last_action = 0;
 unsigned long g_time_to_check_button_again = 0;
-unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2;
+unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
+unsigned long g_time_of_RGB_current_mode_start = 0;
+uint32_t g_current_RGB_color = rgbStrip.Color(0, 0, 0);
 bool g_last_rgb_button_state = false;
 bool g_last_vibrate_button_state = false;
 
 int g_rgb_state = 0;
 int g_rgb_last_processed_state = -1;
-
 
 
 // the setup function runs once when you power on the board or press reset
@@ -94,7 +95,7 @@ void do_buttons(unsigned long current_time) {
 
   //if it is pressed now and it wasn't last time we checked...
   if (current_rgb_button_state && !g_last_rgb_button_state) {
-    change_rgb_mode();
+    change_rgb_mode(current_time);
     reset_sleep_timer(current_time);
   }
 
@@ -108,11 +109,23 @@ void do_buttons(unsigned long current_time) {
 }
 
 
-void change_rgb_mode() {
+void change_rgb_mode(unsigned long current_time) {
   g_rgb_state++;
+  g_time_of_RGB_current_mode_start = current_time;
 
   if (g_rgb_state > 2) {
     g_rgb_state = 0;
+  }
+  switch (g_rgb_state) {
+    case 0:
+      g_current_RGB_color = rgbStrip.Color(255, 0, 0);
+      break;
+    case 1:
+      g_current_RGB_color = rgbStrip.Color(0, 255, 0);
+      break;
+    case 2:
+      g_current_RGB_color = rgbStrip.Color(0, 0, 255);
+      break;
   }
 }
 
@@ -127,6 +140,13 @@ void start_vibrate(unsigned long current_time) {
   turn_on_vibrate_motor();
 }
 
+//g_time_of_RGB_current_mode_start
+//g_current_RGB_color
+void new_do_rgb(unsigned long current_time) {
+  switch (g_rgb_state) {
+
+  }
+}
 
 void do_rgb(unsigned long current_time) {
   if (g_rgb_state != g_rgb_last_processed_state) {
