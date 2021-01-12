@@ -1,5 +1,5 @@
 /*
-  KarisBox
+  KarisGiftCode
 
   Small toy for my child. The physical box has several LEDs and switches, 8 RGB LEDs and a
   small vibration motor.
@@ -36,14 +36,14 @@
 Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 
-unsigned long time_of_last_action = 0;
-unsigned long time_to_check_button_again = 0;
-unsigned long time_of_vibration_start = INACTIVE_TIME * 2;
-bool last_rgb_button_state = false;
-bool last_vibrate_button_state = false;
+unsigned long g_time_of_last_action = 0;
+unsigned long g_time_to_check_button_again = 0;
+unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2;
+bool g_last_rgb_button_state = false;
+bool g_last_vibrate_button_state = false;
 
-int rgb_state = 0;
-int rgb_last_processed_state = -1;
+int g_rgb_state = 0;
+int g_rgb_last_processed_state = -1;
 
 
 
@@ -72,8 +72,9 @@ void setup() {
 void loop() {
   unsigned long current_time = millis();
 
-  if (current_time >= time_to_check_button_again) { //basic debounce logic
+  if (current_time >= g_time_to_check_button_again) { //basic debounce logic, only check the buttons so often.
     do_buttons(current_time);
+    g_time_to_check_button_again = current_time + BUTTON_CHECK_TIME;
   }
 
   do_rgb(current_time);
@@ -92,67 +93,44 @@ void do_buttons(unsigned long current_time) {
   bool current_vibrate_button_state = !digitalRead(PIN_VIBRATE_SWITCH);
 
   //if it is pressed now and it wasn't last time we checked...
-  if (current_rgb_button_state && !last_rgb_button_state) {
+  if (current_rgb_button_state && !g_last_rgb_button_state) {
     change_rgb_mode();
     reset_sleep_timer(current_time);
   }
 
-  if (current_vibrate_button_state && !last_vibrate_button_state) {
+  if (current_vibrate_button_state && !g_last_vibrate_button_state) {
     start_vibrate(current_time);
     reset_sleep_timer(current_time);
   }
 
-  last_rgb_button_state = current_rgb_button_state;
-  last_vibrate_button_state = current_rgb_button_state;
-  time_to_check_button_again = current_time + BUTTON_CHECK_TIME;
+  g_last_rgb_button_state = current_rgb_button_state;
+  g_last_vibrate_button_state = current_rgb_button_state;
 }
 
-void change_rgb_mode() {
-  rgb_state++;
 
-  if (rgb_state > 2) {
-    rgb_state = 0;
+void change_rgb_mode() {
+  g_rgb_state++;
+
+  if (g_rgb_state > 2) {
+    g_rgb_state = 0;
   }
 }
 
 
 void reset_sleep_timer(unsigned long current_time) {
-  time_of_last_action = current_time;
+  g_time_of_last_action = current_time;
 }
 
 
 void start_vibrate(unsigned long current_time) {
-  time_of_vibration_start = current_time;
+  g_time_of_vibration_start = current_time;
   turn_on_vibrate_motor();
 }
 
 
-void turn_off_outputs() {
-  //pinMode(PIN_RGB, INPUT); //If this is not done the RGB LEDs ground through this data pin and still light up/draw power.
-  pinMode(PIN_LED_CUTOFF, INPUT); //this just saves power for some reason. Effectively stops driving the transistors high.
-  pinMode(PIN_VIBRATE_DRIVE, INPUT); //this just saves power for some reason
-}
-
-
-//go to sleep and never come back. Have to reset to come back. Thankfully a button exists for that!
-void go_to_sleep() {
-  turn_off_outputs();
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-  sleep_enable();
-  sleep_cpu();
-}
-
-
-bool ready_to_sleep(unsigned long current) {
-  if ( (current - time_of_last_action) > INACTIVE_TIME ) {
-    return true;
-  }
-  return false;
-}
-
 void do_rgb(unsigned long current_time) {
-  if (rgb_state != rgb_last_processed_state) {
-    switch (rgb_state) {
+  if (g_rgb_state != g_rgb_last_processed_state) {
+    switch (g_rgb_state) {
       case 0:
         colorWipe(rgbStrip.Color(255,   0,   0), 50); // Red
         break;
@@ -163,25 +141,22 @@ void do_rgb(unsigned long current_time) {
         colorWipe(rgbStrip.Color(  0,   0, 255), 50); // Blue
         break;
     }
-    rgb_last_processed_state = rgb_state;
+    g_rgb_last_processed_state = g_rgb_state;
   }
 }
 
 
-void turn_on_vibrate_motor() {
-  digitalWrite(PIN_VIBRATE_DRIVE, HIGH);
-}
-
-
-void turn_off_vibrate_motor() {
-  digitalWrite(PIN_VIBRATE_DRIVE, LOW);
-}
-
-
-
 //want 0.5 second pulse, 0.5 second wait, 0.5 second pulse, 1 second wait, then repeat the pulses
+// 0.0 seconds - turned on (by start_vibrate())
+// 0.5 seconds - turn off
+// 1.0 seconds - turn on
+// 1.5 seconds - turn off
+// 2.5 seconds - turn on
+// 3.0 seconds - turn off
+// 3.5 seconds - turn on
+// 4.0 seconds - turn off
 void do_vibrate(unsigned long current) {
-  unsigned long difference = current - time_of_vibration_start; //this should never go negative
+  unsigned long difference = current - g_time_of_vibration_start; //this should never go negative
 
   if (digitalRead(PIN_VIBRATE_DRIVE)) { //was on, so turn it off
     if (
@@ -203,6 +178,49 @@ void do_vibrate(unsigned long current) {
     }
   }
 }
+
+
+void turn_on_vibrate_motor() {
+  digitalWrite(PIN_VIBRATE_DRIVE, HIGH);
+}
+
+
+void turn_off_vibrate_motor() {
+  digitalWrite(PIN_VIBRATE_DRIVE, LOW);
+}
+
+
+
+
+
+
+
+void turn_off_outputs() {
+  //pinMode(PIN_RGB, INPUT); //If this is not done the RGB LEDs ground through this data pin and still light up/draw power.
+  pinMode(PIN_LED_CUTOFF, INPUT); //this just saves power for some reason. Effectively stops driving the transistors high.
+  pinMode(PIN_VIBRATE_DRIVE, INPUT); //this just saves power for some reason
+}
+
+
+//go to sleep and never come back. Have to reset to come back. Thankfully a button exists for that!
+void go_to_sleep() {
+  turn_off_outputs();
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+  sleep_cpu();
+}
+
+
+bool ready_to_sleep(unsigned long current) {
+  if ( (current - g_time_of_last_action) > INACTIVE_TIME ) {
+    return true;
+  }
+  return false;
+}
+
+
+
+
 
 
 
