@@ -449,7 +449,7 @@ L Connector:Conn_01x03_Female J1
 U 1 1 5FFF6A89
 P 3100 5050
 F 0 "J1" H 3128 5076 50  0000 L CNN
-F 1 "Conn_01x03_Female" H 2300 5300 50  0000 L CNN
+F 1 "RGB LED Connection" H 2300 5300 50  0000 L CNN
 F 2 "Connector_PinSocket_2.54mm:PinSocket_1x03_P2.54mm_Vertical" H 3100 5050 50  0001 C CNN
 F 3 "~" H 3100 5050 50  0001 C CNN
 	1    3100 5050
@@ -487,7 +487,7 @@ L Connector:Conn_01x02_Female J5
 U 1 1 5FFE7EB8
 P 8900 1350
 F 0 "J5" H 8928 1326 50  0000 L CNN
-F 1 "Conn_01x02_Female" H 8500 1150 50  0000 L CNN
+F 1 "Motor Connection" H 8500 1150 50  0000 L CNN
 F 2 "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical" H 8900 1350 50  0001 C CNN
 F 3 "~" H 8900 1350 50  0001 C CNN
 	1    8900 1350
@@ -504,7 +504,7 @@ L Connector_Generic:Conn_02x20_Top_Bottom J4
 U 1 1 5FFF23C5
 P 6050 1450
 F 0 "J4" V 6146 2430 50  0000 L CNN
-F 1 "Conn_02x20_Top_Bottom" V 6450 950 50  0000 L CNN
+F 1 "LEDs on Buttons and Switches" V 6450 950 50  0000 L CNN
 F 2 "Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical" H 6050 1450 50  0001 C CNN
 F 3 "~" H 6050 1450 50  0001 C CNN
 	1    6050 1450
@@ -971,7 +971,7 @@ L Connector_Generic:Conn_02x03_Top_Bottom J2
 U 1 1 60082B98
 P 4100 1550
 F 0 "J2" H 4150 1867 50  0000 C CNN
-F 1 "Conn_02x03_Top_Bottom" H 4150 1776 50  0000 C CNN
+F 1 "Switch Connections" H 4150 1776 50  0000 C CNN
 F 2 "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical" H 4100 1550 50  0001 C CNN
 F 3 "~" H 4100 1550 50  0001 C CNN
 	1    4100 1550
@@ -982,7 +982,7 @@ L Connector:Conn_01x02_Female J3
 U 1 1 600A7B57
 P 4100 2800
 F 0 "J3" H 4128 2776 50  0000 L CNN
-F 1 "Conn_01x02_Female" H 3600 2550 50  0000 L CNN
+F 1 "Battery Connection" H 3600 2550 50  0000 L CNN
 F 2 "Connector_PinSocket_2.54mm:PinSocket_1x02_P2.54mm_Vertical" H 4100 2800 50  0001 C CNN
 F 3 "~" H 4100 2800 50  0001 C CNN
 	1    4100 2800
