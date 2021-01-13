@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name KarisGiftPCB-rescue)(type Legacy)(uri ${KIPRJMOD}/KarisGiftPCB-rescue.lib)(options "")(descr ""))
+)

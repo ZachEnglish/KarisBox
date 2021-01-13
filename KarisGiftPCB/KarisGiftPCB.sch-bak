@@ -15,7 +15,7 @@ Comment3 ""
 Comment4 ""
 $EndDescr
 $Comp
-L KarisGift-rescue:ATtiny85V-10PU-MCU_Microchip_ATtiny U1
+L KarisGiftPCB-rescue:ATtiny85V-10PU-MCU_Microchip_ATtiny-KarisGift-rescue U1
 U 1 1 5FDE0C7F
 P 1900 1700
 F 0 "U1" H 1370 1746 50  0000 R CNN
