@@ -211,8 +211,8 @@ void turn_off_vibrate_motor() {
 
 
 //has it been sitting long enough to turn off?
-bool ready_to_sleep(unsigned long current) {
-  if ( (current - g_time_of_last_action) > INACTIVE_TIME ) {
+bool ready_to_sleep(unsigned long current_time) {
+  if ( (current_time - g_time_of_last_action) > INACTIVE_TIME ) {
     return true;
   }
   return false;
@@ -229,10 +229,11 @@ void go_to_sleep() {
 
 
 //power is saved on the ATtiny85 by setting outputs to inputs before sleeping
+//using inpput_pullup because the intertubes says it could save power in some situations
 void turn_off_outputs() {
-  pinMode(PIN_RGB, INPUT);
-  pinMode(PIN_LED_CUTOFF, INPUT);
-  pinMode(PIN_VIBRATE_DRIVE, INPUT);
+  pinMode(PIN_RGB, INPUT_PULLUP);
+  pinMode(PIN_LED_CUTOFF, INPUT_PULLUP);
+  pinMode(PIN_VIBRATE_DRIVE, INPUT_PULLUP);
 }
 
 
