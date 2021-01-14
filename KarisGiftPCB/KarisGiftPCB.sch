@@ -500,17 +500,6 @@ Wire Wire Line
 	8700 1450 8700 1650
 Connection ~ 8700 1650
 $Comp
-L Connector_Generic:Conn_02x20_Top_Bottom J4
-U 1 1 5FFF23C5
-P 6050 1450
-F 0 "J4" V 6146 2430 50  0000 L CNN
-F 1 "LEDs on Buttons and Switches" V 6450 950 50  0000 L CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical" H 6050 1450 50  0001 C CNN
-F 3 "~" H 6050 1450 50  0001 C CNN
-	1    6050 1450
-	0    -1   -1   0   
-$EndComp
-$Comp
 L Device:R R7
 U 1 1 5FFF6A4A
 P 5250 1900
@@ -870,63 +859,6 @@ Wire Wire Line
 Wire Wire Line
 	5150 1050 5150 1150
 Wire Wire Line
-	5150 1150 5250 1150
-Connection ~ 5150 1150
-Connection ~ 5250 1150
-Wire Wire Line
-	5250 1150 5350 1150
-Connection ~ 5350 1150
-Wire Wire Line
-	5350 1150 5450 1150
-Connection ~ 5450 1150
-Wire Wire Line
-	5450 1150 5550 1150
-Connection ~ 5550 1150
-Wire Wire Line
-	5550 1150 5650 1150
-Connection ~ 5650 1150
-Wire Wire Line
-	5650 1150 5750 1150
-Connection ~ 5750 1150
-Wire Wire Line
-	5750 1150 5850 1150
-Connection ~ 5850 1150
-Wire Wire Line
-	5850 1150 5950 1150
-Connection ~ 5950 1150
-Wire Wire Line
-	5950 1150 6050 1150
-Connection ~ 6050 1150
-Wire Wire Line
-	6050 1150 6150 1150
-Connection ~ 6150 1150
-Wire Wire Line
-	6150 1150 6250 1150
-Connection ~ 6250 1150
-Wire Wire Line
-	6250 1150 6350 1150
-Connection ~ 6350 1150
-Wire Wire Line
-	6350 1150 6450 1150
-Connection ~ 6450 1150
-Wire Wire Line
-	6450 1150 6550 1150
-Connection ~ 6550 1150
-Wire Wire Line
-	6550 1150 6650 1150
-Connection ~ 6650 1150
-Wire Wire Line
-	6650 1150 6750 1150
-Connection ~ 6750 1150
-Wire Wire Line
-	6750 1150 6850 1150
-Connection ~ 6850 1150
-Wire Wire Line
-	6850 1150 6950 1150
-Connection ~ 6950 1150
-Wire Wire Line
-	6950 1150 7050 1150
-Wire Wire Line
 	5150 1650 5150 1750
 Wire Wire Line
 	5250 1750 5250 1650
@@ -966,17 +898,6 @@ Wire Wire Line
 	6950 1650 6950 1750
 Wire Wire Line
 	7050 1750 7050 1650
-$Comp
-L Connector_Generic:Conn_02x03_Top_Bottom J2
-U 1 1 60082B98
-P 4100 1550
-F 0 "J2" H 4150 1867 50  0000 C CNN
-F 1 "Switch Connections" H 4150 1776 50  0000 C CNN
-F 2 "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical" H 4100 1550 50  0001 C CNN
-F 3 "~" H 4100 1550 50  0001 C CNN
-	1    4100 1550
-	1    0    0    -1  
-$EndComp
 $Comp
 L Connector:Conn_01x02_Female J3
 U 1 1 600A7B57
@@ -1020,4 +941,83 @@ Wire Notes Line
 	4450 3150 4450 2500
 Wire Notes Line
 	4450 2500 3550 2500
+Wire Wire Line
+	5150 1150 5250 1150
+$Comp
+L Connector_Generic:Conn_02x20_Odd_Even J4
+U 1 1 60001D64
+P 6050 1450
+F 0 "J4" V 6146 2429 50  0000 L CNN
+F 1 "LEDs on Buttons and Switches" V 6450 1100 50  0000 L CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x20_P2.54mm_Vertical" H 6050 1450 50  0001 C CNN
+F 3 "~" H 6050 1450 50  0001 C CNN
+	1    6050 1450
+	0    -1   -1   0   
+$EndComp
+Connection ~ 5150 1150
+Wire Wire Line
+	6950 1150 7050 1150
+Wire Wire Line
+	5250 1150 5350 1150
+Connection ~ 5250 1150
+Wire Wire Line
+	5350 1150 5450 1150
+Connection ~ 5350 1150
+Wire Wire Line
+	5450 1150 5550 1150
+Connection ~ 5450 1150
+Wire Wire Line
+	5650 1150 5550 1150
+Connection ~ 5550 1150
+Wire Wire Line
+	5650 1150 5750 1150
+Connection ~ 5650 1150
+Wire Wire Line
+	5750 1150 5850 1150
+Connection ~ 5750 1150
+Wire Wire Line
+	5850 1150 5950 1150
+Connection ~ 5850 1150
+Wire Wire Line
+	5950 1150 6050 1150
+Connection ~ 5950 1150
+Wire Wire Line
+	6050 1150 6150 1150
+Connection ~ 6050 1150
+Wire Wire Line
+	6150 1150 6250 1150
+Connection ~ 6150 1150
+Wire Wire Line
+	6250 1150 6350 1150
+Connection ~ 6250 1150
+Wire Wire Line
+	6350 1150 6450 1150
+Connection ~ 6350 1150
+Wire Wire Line
+	6450 1150 6550 1150
+Connection ~ 6450 1150
+Wire Wire Line
+	6550 1150 6650 1150
+Connection ~ 6550 1150
+Wire Wire Line
+	6650 1150 6750 1150
+Connection ~ 6650 1150
+Wire Wire Line
+	6750 1150 6850 1150
+Connection ~ 6750 1150
+Wire Wire Line
+	6850 1150 6950 1150
+Connection ~ 6850 1150
+Connection ~ 6950 1150
+$Comp
+L Connector_Generic:Conn_02x03_Odd_Even J2
+U 1 1 60045888
+P 4100 1550
+F 0 "J2" H 4150 1867 50  0000 C CNN
+F 1 "Switches Connector" H 4150 1776 50  0000 C CNN
+F 2 "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical" H 4100 1550 50  0001 C CNN
+F 3 "~" H 4100 1550 50  0001 C CNN
+	1    4100 1550
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
