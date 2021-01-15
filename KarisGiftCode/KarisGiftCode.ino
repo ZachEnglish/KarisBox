@@ -45,15 +45,13 @@ unsigned long g_time_of_last_action = 0;
 unsigned long g_time_to_check_buttons_again = 0;
 unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
 unsigned long g_time_of_RGB_current_mode_start = 0;
-uint32_t      g_current_RGB_color = rgbStrip.Color(0, 0, 0);
+uint32_t      g_current_RGB_color = rgbStrip.Color(255, 0, 0);
 int           g_last_pixel = -1;
 long          g_first_RGB_pixel_hue = 0;
-long          g_last_rainbow_loop = -1;
+long          g_last_rainbow_loop = 0;
 bool          g_last_rgb_button_state = false;
 bool          g_last_vibrate_button_state = false;
-
-int g_rgb_state = 0;
-int g_rgb_last_processed_state = -1;
+int           g_rgb_state = 0;
 
 
 // the setup function runs once when you power on the board or press reset
@@ -121,7 +119,7 @@ void change_rgb_mode(unsigned long current_time) {
   g_rgb_state++;
   g_time_of_RGB_current_mode_start = current_time;
 
-  if (g_rgb_state > 2) {
+  if (g_rgb_state > 3) {
     g_rgb_state = 0;
   }
   switch (g_rgb_state) {
@@ -133,6 +131,9 @@ void change_rgb_mode(unsigned long current_time) {
       break;
     case 2:
       g_current_RGB_color = rgbStrip.Color(0, 0, 255);
+      break;
+    case 3:
+      //rainbow(1); //works, know it can get here
       break;
   }
 }
@@ -151,21 +152,22 @@ void start_vibrate(unsigned long current_time) {
 
 void do_rgb(unsigned long current_time) {
   unsigned long time_since_entering_RGB_state = current_time - g_time_of_RGB_current_mode_start;
+  int current_pixel = 0;
+  unsigned long rainbow_loop_counter = 0;
 
   switch (g_rgb_state) {
     case 0:
     case 1:
     case 2:
-      int current_pixel = ( time_since_entering_RGB_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
+      current_pixel = ( time_since_entering_RGB_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
       if (current_pixel != g_last_pixel) {
         g_last_pixel = current_pixel;
         progress_color_wipe(current_pixel);
       }
       break;
     case 3:
-      //g_first_RGB_pixel_hue
-      long rainbow_loop_counter = time_since_entering_RGB_state / RGB_RAINBOW_DELAY;
-      if (rainbow_loop_counter != g_last_rainbow_loop){
+      rainbow_loop_counter = time_since_entering_RGB_state / RGB_RAINBOW_DELAY;
+      if (rainbow_loop_counter != g_last_rainbow_loop) {
         g_last_rainbow_loop = rainbow_loop_counter;
         progress_rainbow();
       }
@@ -178,30 +180,13 @@ void progress_color_wipe(int pixel) {
   rgbStrip.show();
 }
 
-void progress_rainbow(){
+void progress_rainbow() {
   for (int i = 0; i < rgbStrip.numPixels(); i++) {
     int pixelHue = g_first_RGB_pixel_hue + (i * 65536L / rgbStrip.numPixels());
     rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
   }
   g_first_RGB_pixel_hue += 256;
   rgbStrip.show();
-}
-
-void old_do_rgb(unsigned long current_time) {
-  if (g_rgb_state != g_rgb_last_processed_state) {
-    switch (g_rgb_state) {
-      case 0:
-        colorWipe(rgbStrip.Color(255,   0,   0), 50); // Red
-        break;
-      case 1:
-        colorWipe(rgbStrip.Color(  0, 255,   0), 50); // Green
-        break;
-      case 2:
-        colorWipe(rgbStrip.Color(  0,   0, 255), 50); // Blue
-        break;
-    }
-    g_rgb_last_processed_state = g_rgb_state;
-  }
 }
 
 
@@ -268,54 +253,11 @@ void go_to_sleep() {
 
 
 //power is saved on the ATtiny85 by setting outputs to inputs before sleeping
-//using inpput_pullup because the intertubes says it could save power in some situations
+//used inpput_pullup because the intertubes says it could save power in some situations
+//in my real world testing, though, it definitely did NOT save power. Went back to just
+//INPUT.
 void turn_off_outputs() {
-  pinMode(PIN_RGB, INPUT_PULLUP);
-  pinMode(PIN_LED_CUTOFF, INPUT_PULLUP);
-  pinMode(PIN_VIBRATE_DRIVE, INPUT_PULLUP);
-}
-
-
-
-
-
-
-
-
-
-// Fill strip pixels one after another with a color. Strip is NOT cleared
-// first; anything there will be covered pixel by pixel. Pass in color
-// (as a single 'packed' 32-bit value, which you can get by calling
-// strip.Color(red, green, blue) as shown in the loop() function above),
-// and a delay time (in milliseconds) between pixels.
-void colorWipe(uint32_t color, int wait) {
-  for (int i = 0; i < rgbStrip.numPixels(); i++) { // For each pixel in strip...
-    rgbStrip.setPixelColor(i, color);         //  Set pixel's color (in RAM)
-    rgbStrip.show();                          //  Update strip to match
-    delay(wait);                           //  Pause for a moment
-  }
-}
-
-// Rainbow cycle along whole strip. Pass delay time (in ms) between frames.
-void rainbow(int wait) {
-  // Hue of first pixel runs 5 complete loops through the color wheel.
-  // Color wheel has a range of 65536 but it's OK if we roll over, so
-  // just count from 0 to 5*65536. Adding 256 to firstPixelHue each time
-  // means we'll make 5*65536/256 = 1280 passes through this outer loop:
-  for (long firstPixelHue = 0; firstPixelHue < 5 * 65536; firstPixelHue += 256) {
-    for (int i = 0; i < rgbStrip.numPixels(); i++) { // For each pixel in strip...
-      // Offset pixel hue by an amount to make one full revolution of the
-      // color wheel (range of 65536) along the length of the strip
-      // (strip.numPixels() steps):
-      int pixelHue = firstPixelHue + (i * 65536L / rgbStrip.numPixels());
-      // strip.ColorHSV() can take 1 or 3 arguments: a hue (0 to 65535) or
-      // optionally add saturation and value (brightness) (each 0 to 255).
-      // Here we're using just the single-argument hue variant. The result
-      // is passed through strip.gamma32() to provide 'truer' colors
-      // before assigning to each pixel:
-      rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
-    }
-    rgbStrip.show(); // Update strip with new contents
-    delay(wait);  // Pause for a moment
-  }
+  pinMode(PIN_RGB, INPUT);
+  pinMode(PIN_LED_CUTOFF, INPUT);
+  pinMode(PIN_VIBRATE_DRIVE, INPUT);
 }
