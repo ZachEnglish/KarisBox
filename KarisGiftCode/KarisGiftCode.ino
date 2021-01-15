@@ -5,7 +5,8 @@
   small vibration motor.
 
   The ATtiny85 controls the power for everything through several transistors, thus making it
-  not possible to accidently leave it all powered on for a long time when inactive.
+  not possible to accidently leave it all powered on for a long time when inactive. Never
+  actually "off", just in a sleep mode until the reset button is pressed.
 */
 
 #include <avr/sleep.h> //for putting the ATtiny85 nigh-nigh
@@ -28,21 +29,28 @@
 
 //#define INACTIVE_TIME (90*1000) //90 seconds converted to milliseconds
 #define INACTIVE_TIME (15*1000) //just for testing, I don't have that much patience
+
 #define BUTTON_CHECK_TIME 10 //wait 10 milliseconds between checking the buttons' state
 
+#define RGB_WIPE_DELAY    50
+#define RGB_RAINBOW_DELAY 1
 
-//Make an object/variable to talk to the RGB strip. Tell it how many LEDs on there
+
+//Make an object/variable to talk to the RGB strip. Tell it how many LEDs there are
 //and what pin to talk to them on. Also how to format some of the data.
 Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 
 unsigned long g_time_of_last_action = 0;
-unsigned long g_time_to_check_button_again = 0;
+unsigned long g_time_to_check_buttons_again = 0;
 unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
 unsigned long g_time_of_RGB_current_mode_start = 0;
-uint32_t g_current_RGB_color = rgbStrip.Color(0, 0, 0);
-bool g_last_rgb_button_state = false;
-bool g_last_vibrate_button_state = false;
+uint32_t      g_current_RGB_color = rgbStrip.Color(0, 0, 0);
+int           g_last_pixel = -1;
+long          g_first_RGB_pixel_hue = 0;
+long          g_last_rainbow_loop = -1;
+bool          g_last_rgb_button_state = false;
+bool          g_last_vibrate_button_state = false;
 
 int g_rgb_state = 0;
 int g_rgb_last_processed_state = -1;
@@ -73,9 +81,9 @@ void setup() {
 void loop() {
   unsigned long current_time = millis();
 
-  if (current_time >= g_time_to_check_button_again) { //basic debounce logic, only check the buttons so often.
+  if (current_time >= g_time_to_check_buttons_again) { //basic debounce logic, only check the buttons so often.
     do_buttons(current_time);
-    g_time_to_check_button_again = current_time + BUTTON_CHECK_TIME;
+    g_time_to_check_buttons_again = current_time + BUTTON_CHECK_TIME;
   }
 
   do_rgb(current_time);
@@ -140,15 +148,46 @@ void start_vibrate(unsigned long current_time) {
   turn_on_vibrate_motor();
 }
 
-//g_time_of_RGB_current_mode_start
-//g_current_RGB_color
-void new_do_rgb(unsigned long current_time) {
-  switch (g_rgb_state) {
 
+void do_rgb(unsigned long current_time) {
+  unsigned long time_since_entering_RGB_state = current_time - g_time_of_RGB_current_mode_start;
+
+  switch (g_rgb_state) {
+    case 0:
+    case 1:
+    case 2:
+      int current_pixel = ( time_since_entering_RGB_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
+      if (current_pixel != g_last_pixel) {
+        g_last_pixel = current_pixel;
+        progress_color_wipe(current_pixel);
+      }
+      break;
+    case 3:
+      //g_first_RGB_pixel_hue
+      long rainbow_loop_counter = time_since_entering_RGB_state / RGB_RAINBOW_DELAY;
+      if (rainbow_loop_counter != g_last_rainbow_loop){
+        g_last_rainbow_loop = rainbow_loop_counter;
+        progress_rainbow();
+      }
+      break;
   }
 }
 
-void do_rgb(unsigned long current_time) {
+void progress_color_wipe(int pixel) {
+  rgbStrip.setPixelColor(pixel, g_current_RGB_color);
+  rgbStrip.show();
+}
+
+void progress_rainbow(){
+  for (int i = 0; i < rgbStrip.numPixels(); i++) {
+    int pixelHue = g_first_RGB_pixel_hue + (i * 65536L / rgbStrip.numPixels());
+    rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
+  }
+  g_first_RGB_pixel_hue += 256;
+  rgbStrip.show();
+}
+
+void old_do_rgb(unsigned long current_time) {
   if (g_rgb_state != g_rgb_last_processed_state) {
     switch (g_rgb_state) {
       case 0:
