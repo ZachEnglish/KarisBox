@@ -20,11 +20,11 @@
 
 #define NUMBER_OF_RGB_LEDS 8
 
-#define PIN_RGB            0
-#define PIN_LED_CUTOFF     1
-#define PIN_VIBRATE_DRIVE  2
-#define PIN_VIBRATE_SWITCH 3
-#define PIN_RGB_SWITCH     4
+#define PIN_RGB            0 //data line out to the RGB LEDs
+#define PIN_LED_CUTOFF     1 //signal to all LED and RGB LED transistors
+#define PIN_VIBRATE_DRIVE  2 //signal to vibration motor transistor
+#define PIN_VIBRATE_SWITCH 3 //input from button/switch to initiate vibrate sequence
+#define PIN_RGB_SWITCH     4 //input form button/switch to change RGB state
 
 
 //#define INACTIVE_TIME (90*1000) //90 seconds converted to milliseconds
@@ -32,8 +32,8 @@
 
 #define BUTTON_CHECK_TIME 10 //wait 10 milliseconds between checking the buttons' state
 
-#define RGB_WIPE_DELAY    50
-#define RGB_RAINBOW_DELAY 1
+#define RGB_WIPE_DELAY    50 //wait 50 milliseconds between changing RGB leds to the new color to give a "wipe" look
+#define RGB_RAINBOW_DELAY 1  //wait 1 millisecond between hue changes while doing the rainbow
 
 
 //Make an object/variable to talk to the RGB strip. Tell it how many LEDs there are
@@ -42,15 +42,11 @@ Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 
 unsigned long g_time_of_last_action = 0;
-unsigned long g_time_to_check_buttons_again = 0;
 unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
 unsigned long g_time_of_RGB_current_mode_start = 0;
 uint32_t      g_current_RGB_color = rgbStrip.Color(255, 0, 0);
-int           g_last_pixel = -1;
 long          g_first_RGB_pixel_hue = 0;
-long          g_last_rainbow_loop = 0;
-bool          g_last_rgb_button_state = false;
-bool          g_last_vibrate_button_state = false;
+unsigned long g_last_rainbow_loop = 0;
 int           g_rgb_state = 0;
 
 
@@ -77,11 +73,12 @@ void setup() {
 
 // the loop function runs over and over again until it puts itself to sleep.
 void loop() {
+  static unsigned long time_to_check_buttons_again = 0;
   unsigned long current_time = millis();
 
-  if (current_time >= g_time_to_check_buttons_again) { //basic debounce logic, only check the buttons so often.
+  if (current_time >= time_to_check_buttons_again) { //basic debounce logic, only check the buttons so often.
     do_buttons(current_time);
-    g_time_to_check_buttons_again = current_time + BUTTON_CHECK_TIME;
+    time_to_check_buttons_again = current_time + BUTTON_CHECK_TIME;
   }
 
   do_rgb(current_time);
@@ -95,23 +92,25 @@ void loop() {
 
 
 void do_buttons(unsigned long current_time) {
+  static bool last_rgb_button_state = false;
+  static bool last_vibrate_button_state = false;
   //Get the state of the buttons. Invert the logic to make true/high when pressed
   bool current_rgb_button_state = !digitalRead(PIN_RGB_SWITCH);
   bool current_vibrate_button_state = !digitalRead(PIN_VIBRATE_SWITCH);
 
   //if it is pressed now and it wasn't last time we checked...
-  if (current_rgb_button_state && !g_last_rgb_button_state) {
+  if (current_rgb_button_state && !last_rgb_button_state) {
     change_rgb_mode(current_time);
     reset_sleep_timer(current_time);
   }
 
-  if (current_vibrate_button_state && !g_last_vibrate_button_state) {
+  if (current_vibrate_button_state && !last_vibrate_button_state) {
     start_vibrate(current_time);
     reset_sleep_timer(current_time);
   }
 
-  g_last_rgb_button_state = current_rgb_button_state;
-  g_last_vibrate_button_state = current_rgb_button_state;
+  last_rgb_button_state = current_rgb_button_state;
+  last_vibrate_button_state = current_rgb_button_state;
 }
 
 
@@ -151,6 +150,7 @@ void start_vibrate(unsigned long current_time) {
 
 
 void do_rgb(unsigned long current_time) {
+  static int last_RGB_pixel_updated = -1;
   unsigned long time_since_entering_RGB_state = current_time - g_time_of_RGB_current_mode_start;
   int current_pixel = 0;
   unsigned long rainbow_loop_counter = 0;
@@ -160,8 +160,8 @@ void do_rgb(unsigned long current_time) {
     case 1:
     case 2:
       current_pixel = ( time_since_entering_RGB_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
-      if (current_pixel != g_last_pixel) {
-        g_last_pixel = current_pixel;
+      if (current_pixel != last_RGB_pixel_updated) {
+        last_RGB_pixel_updated = current_pixel;
         progress_color_wipe(current_pixel);
       }
       break;
