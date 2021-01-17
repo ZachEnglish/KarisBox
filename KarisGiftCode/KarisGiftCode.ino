@@ -32,8 +32,9 @@
 
 #define BUTTON_CHECK_TIME 10 //wait 10 milliseconds between checking the buttons' state
 
-#define RGB_WIPE_DELAY    50 //wait 50 milliseconds between changing RGB leds to the new color to give a "wipe" look
-#define RGB_RAINBOW_DELAY 1  //wait 1 millisecond between hue changes while doing the rainbow
+#define RGB_WIPE_DELAY         50 //wait 50 milliseconds between changing RGB leds to the new color to give a "wipe" look
+#define RGB_RAINBOW_FAST_DELAY 1  //wait 1 millisecond between hue changes while doing the fast rainbow
+#define RGB_RAINBOW_SLOW_DELAY 10 //wait 1 millisecond between hue changes while doing the slow rainbow
 
 //the states for the RGB LEDs. When the button is pressed the program should cycle through these.
 enum RGB_states {
@@ -41,7 +42,8 @@ enum RGB_states {
   RGB_RED_WIPE = 0,
   RGB_GREEN_WIPE,
   RGB_BLUE_WIPE,
-  RGB_RAINBOW,
+  RGB_RAINBOW_FAST,
+  RGB_RAINBOW_SLOW,
   RGB_states_count
 };
 
@@ -112,7 +114,7 @@ void do_buttons(unsigned long current_time) {
   }
 }
 
-bool rgb_button_has_been_pressed(){
+bool rgb_button_has_been_pressed() {
   static bool last_rgb_button_state = false;
   //Get the state of the button. Invert the logic to make true/high when pressed
   bool current_rgb_button_state = !digitalRead(PIN_RGB_SWITCH);
@@ -130,7 +132,7 @@ bool rgb_button_has_been_pressed(){
   return pressed;
 }
 
-bool vibrate_button_has_been_pressed(){
+bool vibrate_button_has_been_pressed() {
   static bool last_vibrate_button_state = false;
   //Get the state of the button. Invert the logic to make true/high when pressed
   bool current_vibrate_button_state = !digitalRead(PIN_VIBRATE_SWITCH);
@@ -161,13 +163,10 @@ void change_rgb_mode(unsigned long current_time) {
     case RGB_BLUE_WIPE:
       set_current_color_to_blue();
       break;
-    case RGB_RAINBOW:
-      //Don't need to do anything here yet
-      break;
   }
 }
 
-void cycle_rgb_state_to_next(){
+void cycle_rgb_state_to_next() {
   g_rgb_state = g_rgb_state + 1;
 
   if (g_rgb_state >= RGB_states_count) {
@@ -175,15 +174,15 @@ void cycle_rgb_state_to_next(){
   }
 }
 
-void set_current_color_to_red(){
+void set_current_color_to_red() {
   g_current_RGB_color = rgbStrip.Color(255, 0, 0);
 }
 
-void set_current_color_to_green(){
+void set_current_color_to_green() {
   g_current_RGB_color = rgbStrip.Color(0, 255, 0);
 }
 
-void set_current_color_to_blue(){
+void set_current_color_to_blue() {
   g_current_RGB_color = rgbStrip.Color(0, 0, 255);
 }
 
@@ -208,16 +207,19 @@ void do_rgb(unsigned long current_time) {
     case RGB_BLUE_WIPE:
       do_color_wipe(time_since_entering_RGB_state);
       break;
-    case RGB_RAINBOW:
-      do_rgb_rainbow(time_since_entering_RGB_state);
+    case RGB_RAINBOW_FAST:
+      do_rgb_rainbow(time_since_entering_RGB_state, RGB_RAINBOW_FAST_DELAY);
+      break;
+    case RGB_RAINBOW_SLOW:
+      do_rgb_rainbow(time_since_entering_RGB_state, RGB_RAINBOW_SLOW_DELAY);
       break;
   }
 }
 
-void do_color_wipe(unsigned long time_in_state){
+void do_color_wipe(unsigned long time_in_state) {
   static unsigned long last_RGB_pixel_updated = NUMBER_OF_RGB_LEDS;
   unsigned long current_pixel = ( time_in_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
-  
+
   if (current_pixel != last_RGB_pixel_updated) {
     last_RGB_pixel_updated = current_pixel;
     progress_color_wipe(current_pixel);
@@ -229,10 +231,14 @@ void progress_color_wipe(int pixel) {
   rgbStrip.show();
 }
 
-void do_rgb_rainbow(unsigned long time_in_state){
+void do_rgb_rainbow(unsigned long time_in_state, unsigned long delay) {
   unsigned long rainbow_loop_counter = 0;
-  
-  rainbow_loop_counter = time_in_state / RGB_RAINBOW_DELAY;
+
+  if (delay == 0) {
+    delay = 1;
+  }
+
+  rainbow_loop_counter = time_in_state / delay;
   if (rainbow_loop_counter != g_last_rainbow_loop) {
     g_last_rainbow_loop = rainbow_loop_counter;
     progress_rainbow();
@@ -245,14 +251,14 @@ void progress_rainbow() {
   rgbStrip.show();
 }
 
-void stage_pixels_for_rainbow(){
+void stage_pixels_for_rainbow() {
   for (int i = 0; i < rgbStrip.numPixels(); i++) {
     int pixelHue = g_first_RGB_pixel_hue + (i * 65536L / rgbStrip.numPixels());
     rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
   }
 }
 
-void advance_rainbow_hue(){
+void advance_rainbow_hue() {
   g_first_RGB_pixel_hue += 256;
 }
 
@@ -284,28 +290,28 @@ void do_vibrate(unsigned long current) {
 // 1.5 seconds - turn off
 // 3.0 seconds - turn off
 // 4.0 seconds - turn off
-bool should_turn_off_vibrate(unsigned long diff){
-  if(( diff >= 500 && diff < 1000 ) ||
-     ( diff >= 1500 && diff < 2500 ) ||
-     ( diff >= 3000 && diff < 3500 ) ||
-     ( diff >= 4000 )
+bool should_turn_off_vibrate(unsigned long diff) {
+  if (( diff >= 500 && diff < 1000 ) ||
+      ( diff >= 1500 && diff < 2500 ) ||
+      ( diff >= 3000 && diff < 3500 ) ||
+      ( diff >= 4000 )
      ) {
     return true;
   }
   else
   {
     return false;
-  }  
+  }
 }
 
 // 1.0 seconds - turn on
 // 2.5 seconds - turn on
 // 3.5 seconds - turn on
-bool should_turn_on_vibrate(unsigned long diff){
-  if( ( diff >= 1000 && diff < 1500 ) ||
-      ( diff >= 2500 && diff < 3000 ) ||
-      ( diff >= 3500 && diff < 4000 )) {
-    return true;  
+bool should_turn_on_vibrate(unsigned long diff) {
+  if ( ( diff >= 1000 && diff < 1500 ) ||
+       ( diff >= 2500 && diff < 3000 ) ||
+       ( diff >= 3500 && diff < 4000 )) {
+    return true;
   }
   else {
     return false;
