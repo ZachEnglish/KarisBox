@@ -60,7 +60,6 @@ unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vib
 unsigned long g_time_of_rgb_current_mode_start = 0;
 uint32_t      g_current_rgb_color = rgbStrip.Color(255, 0, 0);
 long          g_first_rgb_pixel_hue = 0;
-unsigned long g_last_rainbow_loop = 0;
 RGB_states    g_rgb_state = RGB_states_first;
 
 
@@ -211,6 +210,7 @@ void progress_color_wipe(int pixel) {
 }
 
 void do_rgb_rainbow(unsigned long time_in_state, unsigned long delay) {
+  static unsigned long last_rainbow_loop = 0;
   unsigned long rainbow_loop_counter = 0;
 
   if (delay == 0) {
@@ -218,8 +218,8 @@ void do_rgb_rainbow(unsigned long time_in_state, unsigned long delay) {
   }
 
   rainbow_loop_counter = time_in_state / delay;
-  if (rainbow_loop_counter != g_last_rainbow_loop) {
-    g_last_rainbow_loop = rainbow_loop_counter;
+  if (rainbow_loop_counter != last_rainbow_loop) {
+    last_rainbow_loop = rainbow_loop_counter;
     progress_rainbow();
   }
 }
