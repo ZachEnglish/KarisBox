@@ -7,6 +7,8 @@
   The ATtiny85 controls the power for everything through several transistors, thus making it
   not possible to accidently leave it all powered on for a long time when inactive. Never
   actually "off", just in a sleep mode until the reset button is pressed.
+
+  Code and HW schematic can be found @ https://github.com/ZachEnglish/KarisBox 
 */
 
 #include <avr/sleep.h> //for putting the ATtiny85 nigh-nigh
@@ -55,9 +57,9 @@ Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 unsigned long g_time_of_last_action = 0;
 unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
-unsigned long g_time_of_RGB_current_mode_start = 0;
-uint32_t      g_current_RGB_color = rgbStrip.Color(255, 0, 0);
-long          g_first_RGB_pixel_hue = 0;
+unsigned long g_time_of_rgb_current_mode_start = 0;
+uint32_t      g_current_rgb_color = rgbStrip.Color(255, 0, 0);
+long          g_first_rgb_pixel_hue = 0;
 unsigned long g_last_rainbow_loop = 0;
 RGB_states    g_rgb_state = RGB_states_first;
 
@@ -150,61 +152,38 @@ bool vibrate_button_has_been_pressed() {
 }
 
 void change_rgb_mode(unsigned long current_time) {
-  cycle_rgb_state_to_next();
-  g_time_of_RGB_current_mode_start = current_time;
-
-  switch (g_rgb_state) {
-    case RGB_RED_WIPE:
-      set_current_color_to_red();
-      break;
-    case RGB_GREEN_WIPE:
-      set_current_color_to_green();
-      break;
-    case RGB_BLUE_WIPE:
-      set_current_color_to_blue();
-      break;
-  }
-}
-
-void cycle_rgb_state_to_next() {
   g_rgb_state = g_rgb_state + 1;
 
   if (g_rgb_state >= RGB_states_count) {
     g_rgb_state = RGB_states_first;
   }
-}
 
-void set_current_color_to_red() {
-  g_current_RGB_color = rgbStrip.Color(255, 0, 0);
+  g_time_of_rgb_current_mode_start = current_time;
 }
-
-void set_current_color_to_green() {
-  g_current_RGB_color = rgbStrip.Color(0, 255, 0);
-}
-
-void set_current_color_to_blue() {
-  g_current_RGB_color = rgbStrip.Color(0, 0, 255);
-}
-
 
 void reset_sleep_timer(unsigned long current_time) {
   g_time_of_last_action = current_time;
 }
-
 
 void start_vibrate(unsigned long current_time) {
   g_time_of_vibration_start = current_time;
   turn_on_vibrate_motor();
 }
 
-
 void do_rgb(unsigned long current_time) {
-  unsigned long time_since_entering_RGB_state = current_time - g_time_of_RGB_current_mode_start;
+  unsigned long time_since_entering_RGB_state = current_time - g_time_of_rgb_current_mode_start;
 
   switch (g_rgb_state) {
     case RGB_RED_WIPE:
+      g_current_rgb_color = rgbStrip.Color(255, 0, 0);
+      do_color_wipe(time_since_entering_RGB_state);
+      break;
     case RGB_GREEN_WIPE:
+      g_current_rgb_color = rgbStrip.Color(0, 255, 0);
+      do_color_wipe(time_since_entering_RGB_state);
+      break;
     case RGB_BLUE_WIPE:
+      g_current_rgb_color = rgbStrip.Color(0, 0, 255);
       do_color_wipe(time_since_entering_RGB_state);
       break;
     case RGB_RAINBOW_FAST:
@@ -217,17 +196,17 @@ void do_rgb(unsigned long current_time) {
 }
 
 void do_color_wipe(unsigned long time_in_state) {
-  static unsigned long last_RGB_pixel_updated = NUMBER_OF_RGB_LEDS;
+  static unsigned long last_rgb_pixel_updated = NUMBER_OF_RGB_LEDS;
   unsigned long current_pixel = ( time_in_state / RGB_WIPE_DELAY ) % rgbStrip.numPixels();
 
-  if (current_pixel != last_RGB_pixel_updated) {
-    last_RGB_pixel_updated = current_pixel;
+  if (current_pixel != last_rgb_pixel_updated) {
+    last_rgb_pixel_updated = current_pixel;
     progress_color_wipe(current_pixel);
   }
 }
 
 void progress_color_wipe(int pixel) {
-  rgbStrip.setPixelColor(pixel, g_current_RGB_color);
+  rgbStrip.setPixelColor(pixel, g_current_rgb_color);
   rgbStrip.show();
 }
 
@@ -246,20 +225,20 @@ void do_rgb_rainbow(unsigned long time_in_state, unsigned long delay) {
 }
 
 void progress_rainbow() {
-  stage_pixels_for_rainbow();
+  calculate_and_push_pixels_for_rainbow();
   advance_rainbow_hue();
   rgbStrip.show();
 }
 
-void stage_pixels_for_rainbow() {
+void calculate_and_push_pixels_for_rainbow() {
   for (int i = 0; i < rgbStrip.numPixels(); i++) {
-    int pixelHue = g_first_RGB_pixel_hue + (i * 65536L / rgbStrip.numPixels());
+    int pixelHue = g_first_rgb_pixel_hue + (i * 65536L / rgbStrip.numPixels());
     rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
   }
 }
 
 void advance_rainbow_hue() {
-  g_first_RGB_pixel_hue += 256;
+  g_first_rgb_pixel_hue += 256;
 }
 
 //want 0.5 second pulse, 0.5 second wait, 0.5 second pulse, 1 second wait, then repeat the pulses
@@ -274,13 +253,13 @@ void advance_rainbow_hue() {
 void do_vibrate(unsigned long current) {
   unsigned long difference = current - g_time_of_vibration_start; //this should never go negative
 
-  if (digitalRead(PIN_VIBRATE_DRIVE)) { //was on, so turn it off
-    if ( should_turn_off_vibrate( difference ) ) {
+  if ( vibrate_should_be_off( difference ) ) {
+    if ( is_vibrate_motor_on() ) {
       turn_off_vibrate_motor();
     }
-  }
-  else { //motor was off - so turn it ON
-    if ( should_turn_on_vibrate( difference ) ) {
+  }  
+  else { //should be on
+    if ( is_vibrate_motor_on() == false ) {
       turn_on_vibrate_motor();
     }
   }
@@ -290,7 +269,7 @@ void do_vibrate(unsigned long current) {
 // 1.5 seconds - turn off
 // 3.0 seconds - turn off
 // 4.0 seconds - turn off
-bool should_turn_off_vibrate(unsigned long diff) {
+bool vibrate_should_be_off(unsigned long diff) {
   if (( diff >= 500 && diff < 1000 ) ||
       ( diff >= 1500 && diff < 2500 ) ||
       ( diff >= 3000 && diff < 3500 ) ||
@@ -304,29 +283,17 @@ bool should_turn_off_vibrate(unsigned long diff) {
   }
 }
 
-// 1.0 seconds - turn on
-// 2.5 seconds - turn on
-// 3.5 seconds - turn on
-bool should_turn_on_vibrate(unsigned long diff) {
-  if ( ( diff >= 1000 && diff < 1500 ) ||
-       ( diff >= 2500 && diff < 3000 ) ||
-       ( diff >= 3500 && diff < 4000 )) {
-    return true;
-  }
-  else {
-    return false;
-  }
+bool is_vibrate_motor_on() {
+  return ( digitalRead(PIN_VIBRATE_DRIVE) == HIGH );
 }
 
 void turn_on_vibrate_motor() {
   digitalWrite(PIN_VIBRATE_DRIVE, HIGH);
 }
 
-
 void turn_off_vibrate_motor() {
   digitalWrite(PIN_VIBRATE_DRIVE, LOW);
 }
-
 
 //has it been sitting long enough to turn off?
 bool ready_to_sleep(unsigned long current_time) {
@@ -336,7 +303,6 @@ bool ready_to_sleep(unsigned long current_time) {
   return false;
 }
 
-
 //go to sleep and never come back. Have to reset to come back. Thankfully a button exists for that!
 void go_to_sleep() {
   turn_off_outputs();
@@ -344,7 +310,6 @@ void go_to_sleep() {
   sleep_enable();
   sleep_cpu();
 }
-
 
 //power is saved on the ATtiny85 by setting outputs to inputs before sleeping
 //used inpput_pullup because the intertubes says it could save power in some situations
