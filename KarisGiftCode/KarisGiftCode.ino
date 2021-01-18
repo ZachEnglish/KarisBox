@@ -8,7 +8,7 @@
   not possible to accidently leave it all powered on for a long time when inactive. Never
   actually "off", just in a sleep mode until the reset button is pressed.
 
-  Code and HW schematic can be found @ https://github.com/ZachEnglish/KarisBox 
+  Code and HW schematic can be found @ https://github.com/ZachEnglish/KarisBox
 */
 
 #include <avr/sleep.h> //for putting the ATtiny85 nigh-nigh
@@ -257,7 +257,7 @@ void do_vibrate(unsigned long current) {
     if ( is_vibrate_motor_on() ) {
       turn_off_vibrate_motor();
     }
-  }  
+  }
   else { //should be on
     if ( is_vibrate_motor_on() == false ) {
       turn_on_vibrate_motor();
