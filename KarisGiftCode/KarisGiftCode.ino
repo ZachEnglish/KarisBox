@@ -14,6 +14,8 @@
 #include <avr/sleep.h> //for putting the ATtiny85 nigh-nigh
 #include <avr/power.h> //ditto
 #include <Adafruit_NeoPixel.h> //for talking to the RGB LEDs
+#include <EEPROM.h> //for saving state before shutting so when it boots back up it picks up where it left off
+#include <limits.h> //gives us the ULONG_MAX define used to make sure we never accidentally turn on the vibration motor
 
 
 //Stolen from the intertubes. Macro that tells the ATtiny85 to disable the analog to digital converter to save power.
@@ -39,14 +41,14 @@
 #define RGB_RAINBOW_SLOW_DELAY 10 //wait 1 millisecond between hue changes while doing the slow rainbow
 
 //the states for the RGB LEDs. When the button is pressed the program should cycle through these.
-enum RGB_states {
-  RGB_states_first,
+enum RGB_modes {
+  RGB_modes_first,
   RGB_RED_WIPE = 0,
   RGB_GREEN_WIPE,
   RGB_BLUE_WIPE,
   RGB_RAINBOW_FAST,
   RGB_RAINBOW_SLOW,
-  RGB_states_count
+  RGB_modes_count
 };
 
 
@@ -56,11 +58,11 @@ Adafruit_NeoPixel rgbStrip(NUMBER_OF_RGB_LEDS, PIN_RGB, NEO_GRB + NEO_KHZ800);
 
 
 unsigned long g_time_of_last_action = 0;
-unsigned long g_time_of_vibration_start = INACTIVE_TIME * 2; //make sure the vibration doesn't start unless the button is pressed!
+unsigned long g_time_of_vibration_start = ULONG_MAX / 2; //make sure the vibration doesn't start unless the button is pressed!
 unsigned long g_time_of_rgb_current_mode_start = 0;
 uint32_t      g_current_rgb_color = rgbStrip.Color(255, 0, 0);
 long          g_first_rgb_pixel_hue = 0;
-RGB_states    g_rgb_state = RGB_states_first;
+RGB_modes     g_rgb_mode = RGB_modes_first;
 
 
 // the setup function runs once when you power on the board or press reset
@@ -80,6 +82,8 @@ void setup() {
   rgbStrip.begin(); //initialize the RGB strip
   rgbStrip.show(); //push out the empty buffer so the strip goes clear (in case it had something in it)
   rgbStrip.setBrightness(50); //turn down the brightness (save power and eyeballs). 0-255
+
+  restore_rgb_mode_from_eeprom();
 }
 
 
@@ -151,10 +155,12 @@ bool vibrate_button_has_been_pressed() {
 }
 
 void change_rgb_mode(unsigned long current_time) {
-  g_rgb_state = g_rgb_state + 1;
+  g_rgb_mode = g_rgb_mode + 1;
 
-  if (g_rgb_state >= RGB_states_count) {
-    g_rgb_state = RGB_states_first;
+  save_current_rgb_mode_to_eeprom();
+
+  if (g_rgb_mode >= RGB_modes_count) {
+    g_rgb_mode = RGB_modes_first;
   }
 
   g_time_of_rgb_current_mode_start = current_time;
@@ -172,7 +178,7 @@ void start_vibrate(unsigned long current_time) {
 void do_rgb(unsigned long current_time) {
   unsigned long time_since_entering_RGB_state = current_time - g_time_of_rgb_current_mode_start;
 
-  switch (g_rgb_state) {
+  switch (g_rgb_mode) {
     case RGB_RED_WIPE:
       g_current_rgb_color = rgbStrip.Color(255, 0, 0);
       do_color_wipe(time_since_entering_RGB_state);
@@ -319,4 +325,27 @@ void turn_off_outputs() {
   pinMode(PIN_RGB, INPUT);
   pinMode(PIN_LED_CUTOFF, INPUT);
   pinMode(PIN_VIBRATE_DRIVE, INPUT);
+}
+
+void save_current_rgb_mode_to_eeprom() {
+  EEPROM.write(0, g_rgb_mode);
+}
+
+void restore_rgb_mode_from_eeprom() {
+  RGB_modes mode_read_in_eeprom = EEPROM.read(0);
+
+  if (rgb_mode_is_out_of_bounds(mode_read_in_eeprom)) {
+    initialize_rgb_mode(&mode_read_in_eeprom);
+  }
+
+  g_rgb_mode = mode_read_in_eeprom;
+}
+
+bool rgb_mode_is_out_of_bounds(RGB_modes mode_to_test) {
+  return mode_to_test >= RGB_modes_count;
+}
+
+void initialize_rgb_mode(RGB_modes *mode_to_init) {
+  *mode_to_init = RGB_modes_first;
+  EEPROM.write(0, *mode_to_init);
 }
