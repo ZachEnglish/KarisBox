@@ -1,7 +1,7 @@
 /*
   KarisGiftCode
 
-  Small toy for my child. The physical box has several LEDs and switches, 8 RGB LEDs and a
+  Small toy for my child. The physical box has several LEDs and switches, 7 RGB LEDs and a
   small vibration motor.
 
   The ATtiny85 controls the power for everything through several transistors, thus making it
@@ -22,7 +22,7 @@
 #define adc_disable() (ADCSRA &= ~(1<<ADEN)) // disable ADC (before power-off)
 
 
-#define NUMBER_OF_RGB_LEDS 8
+#define NUMBER_OF_RGB_LEDS 7
 
 #define PIN_RGB            0 //data line out to the RGB LEDs
 #define PIN_LED_CUTOFF     1 //signal to all LED and RGB LED transistors
@@ -31,19 +31,26 @@
 #define PIN_RGB_SWITCH     4 //input form button/switch to change RGB state
 
 
-//#define INACTIVE_TIME (90*1000) //90 seconds converted to milliseconds
-#define INACTIVE_TIME (15*1000) //just for testing, I don't have that much patience
+#define INACTIVE_TIME (90UL*1000UL) //90 seconds converted to milliseconds
 
 #define BUTTON_CHECK_TIME 10 //wait 10 milliseconds between checking the buttons' state
 
-#define RGB_WIPE_DELAY         50 //wait 50 milliseconds between changing RGB leds to the new color to give a "wipe" look
-#define RGB_RAINBOW_FAST_DELAY 1  //wait 1 millisecond between hue changes while doing the fast rainbow
-#define RGB_RAINBOW_SLOW_DELAY 10 //wait 1 millisecond between hue changes while doing the slow rainbow
+#define RGB_WIPE_DELAY         100 //wait 100 milliseconds between changing RGB leds to the new color to give a "wipe" look
+#define RGB_RAINBOW_FAST_DELAY 5   //wait 1 millisecond between hue changes while doing the fast rainbow
+#define RGB_RAINBOW_SLOW_DELAY 20  //wait 1 millisecond between hue changes while doing the slow rainbow
 
 //the states for the RGB LEDs. When the button is pressed the program should cycle through these.
 enum RGB_modes {
   RGB_modes_first,
-  RGB_RED_WIPE = 0,
+  RGB_RAINBOW_COUNT_0 = 0,
+  RGB_RAINBOW_COUNT_1 = 1,
+  RGB_RAINBOW_COUNT_2 = 2,
+  RGB_RAINBOW_COUNT_3 = 3,
+  RGB_RAINBOW_COUNT_4 = 4,
+  RGB_RAINBOW_COUNT_5 = 5,
+  RGB_RAINBOW_COUNT_6 = 6,
+  RGB_RAINBOW_COUNT_7 = 7,
+  RGB_RED_WIPE,
   RGB_GREEN_WIPE,
   RGB_BLUE_WIPE,
   RGB_RAINBOW_FAST,
@@ -81,7 +88,7 @@ void setup() {
 
   rgbStrip.begin(); //initialize the RGB strip
   rgbStrip.show(); //push out the empty buffer so the strip goes clear (in case it had something in it)
-  rgbStrip.setBrightness(50); //turn down the brightness (save power and eyeballs). 0-255
+  rgbStrip.setBrightness(15); //turn down the brightness (save power and eyeballs). 0-255
 
   restore_rgb_mode_from_eeprom();
 }
@@ -179,6 +186,16 @@ void do_rgb(unsigned long current_time) {
   unsigned long time_since_entering_RGB_state = current_time - g_time_of_rgb_current_mode_start;
 
   switch (g_rgb_mode) {
+    case RGB_RAINBOW_COUNT_0:
+    case RGB_RAINBOW_COUNT_1:
+    case RGB_RAINBOW_COUNT_2:
+    case RGB_RAINBOW_COUNT_3:
+    case RGB_RAINBOW_COUNT_4:
+    case RGB_RAINBOW_COUNT_5:
+    case RGB_RAINBOW_COUNT_6:
+    case RGB_RAINBOW_COUNT_7:
+      do_rgb_count(g_rgb_mode);
+      break;
     case RGB_RED_WIPE:
       g_current_rgb_color = rgbStrip.Color(255, 0, 0);
       do_color_wipe(time_since_entering_RGB_state);
@@ -198,6 +215,11 @@ void do_rgb(unsigned long current_time) {
       do_rgb_rainbow(time_since_entering_RGB_state, RGB_RAINBOW_SLOW_DELAY);
       break;
   }
+}
+
+void do_rgb_count(int current_count) {
+  calculate_and_push_pixels_for_rainbow(current_count);
+  rgbStrip.show();
 }
 
 void do_color_wipe(unsigned long time_in_state) {
@@ -231,15 +253,18 @@ void do_rgb_rainbow(unsigned long time_in_state, unsigned long delay) {
 }
 
 void progress_rainbow() {
-  calculate_and_push_pixels_for_rainbow();
+  calculate_and_push_pixels_for_rainbow(rgbStrip.numPixels());
   advance_rainbow_hue();
   rgbStrip.show();
 }
 
-void calculate_and_push_pixels_for_rainbow() {
-  for (int i = 0; i < rgbStrip.numPixels(); i++) {
+void calculate_and_push_pixels_for_rainbow(int how_many_turned_on) {
+  for (int i = 0; i < how_many_turned_on; i++) {
     int pixelHue = g_first_rgb_pixel_hue + (i * 65536L / rgbStrip.numPixels());
     rgbStrip.setPixelColor(i, rgbStrip.gamma32(rgbStrip.ColorHSV(pixelHue)));
+  }
+  for (int i = how_many_turned_on; i < rgbStrip.numPixels(); i++) {
+    rgbStrip.setPixelColor(i, 0);
   }
 }
 
@@ -303,7 +328,7 @@ void turn_off_vibrate_motor() {
 
 //has it been sitting long enough to turn off?
 bool ready_to_sleep(unsigned long current_time) {
-  if ( (current_time - g_time_of_last_action) > INACTIVE_TIME ) {
+  if ( (current_time - g_time_of_last_action) > (unsigned long)INACTIVE_TIME ) {
     return true;
   }
   return false;

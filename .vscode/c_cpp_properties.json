@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${default}",
+                "C:\\Users\\engli\\OneDrive\\Documents\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\**"
+            ],
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        }
+    ],
+    "version": 4
+}
